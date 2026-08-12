@@ -1,6 +1,5 @@
 set (srcs 
     "main.cpp"
-    "sensor.cpp"
 )
 
 idf_component_register(

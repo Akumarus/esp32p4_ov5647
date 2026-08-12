@@ -1,10 +1,18 @@
 {
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "type": "gdbtarget",
-      "request": "attach",
-      "name": "Eclipse CDT GDB Adapter"
-    }
-  ]
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug ESP32-P4 (start)",
+            "type": "cppdbg",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/build/esp32p4_ov5647.elf",
+            "MIMode": "gdb",
+            "miDebuggerPath": "riscv32-esp-elf-gdb",
+            "miDebuggerServerAddress": "localhost:3333",
+            "stopAtEntry": false,
+            "preLaunchTask": "Start OpenOCD",
+            "postDebugTask": "Stop OpenOCD"
+        }
+    ]
 }

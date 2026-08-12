@@ -42,8 +42,12 @@ extern "C" void app_main(void)
     sensor_cfg.sensor_port = ESP_CAM_SENSOR_MIPI_CSI;
 
     esp_cam_sensor_device_t *dev = ov5647_detect(&sensor_cfg);
-    if (dev == nullptr) {
+    if (dev == NULL) {
         ESP_LOGI("Main", "OV5647 не обнаружен");
     }
     ESP_LOGI("Main", "OV5647 обнаружен, name=%s", dev->name);
+    while (true)
+    {
+        ESP_LOGI("Main", "OV5647 обнаружен, name=%s", dev->name);
+    }
 }

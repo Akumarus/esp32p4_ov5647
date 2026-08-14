@@ -1,6 +1,8 @@
 set (srcs 
     "main.cpp"
     "app/bmp.cpp"
+    "app/isp.cpp"
+    "app/camera.cpp"
 )
 
 idf_component_register(

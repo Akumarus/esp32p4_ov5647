@@ -23,9 +23,11 @@
 #include "esp_cache.h"
 
 #include "bmp.hpp"
+#include "isp.hpp"
 
 static QueueHandle_t s_frame_evt_queue;
 
+volatile bool flag = false;
 volatile uint32_t counter = 0;
 
 static bool IRAM_ATTR on_cam_trans_finished(esp_cam_ctlr_handle_t handle,
@@ -33,6 +35,7 @@ static bool IRAM_ATTR on_cam_trans_finished(esp_cam_ctlr_handle_t handle,
                                              void *data)
 {
     counter++;
+    flag = true;
     return false;
 }
 
@@ -40,9 +43,12 @@ static bool IRAM_ATTR on_cam_trans_started(esp_cam_ctlr_handle_t handle,
                                             esp_cam_ctlr_trans_t *trans,
                                             void *data)
 {
-    esp_cam_ctlr_trans_t new_trans = *(esp_cam_ctlr_trans_t *)data;
-    trans->buffer = new_trans.buffer;
-    trans->buflen = new_trans.buflen;
+    if (flag == false) {
+        esp_cam_ctlr_trans_t new_trans = *(esp_cam_ctlr_trans_t *)data;
+        trans->buffer = new_trans.buffer;
+        trans->buflen = new_trans.buflen;
+    }
+
     return false;
 }
 
@@ -143,18 +149,9 @@ extern "C" void app_main(void)
 
     ESP_ERROR_CHECK(esp_cam_ctlr_enable(csi_handler));
 
-    isp_proc_handle_t isp_handle = nullptr;
-    esp_isp_processor_cfg_t isp_cfg = {};
-    isp_cfg.clk_hz = 80000000;
-    isp_cfg.input_data_source = ISP_INPUT_DATA_SOURCE_CSI;
-    isp_cfg.input_data_color_type = ISP_COLOR_RAW8;
-    isp_cfg.output_data_color_type = ISP_COLOR_RGB565;
-    isp_cfg.has_line_start_packet = false;
-    isp_cfg.has_line_end_packet = false;
-    isp_cfg.h_res = 800;
-    isp_cfg.v_res = 800;
-    ESP_ERROR_CHECK(esp_isp_new_processor(&isp_cfg, &isp_handle));
-    ESP_ERROR_CHECK(esp_isp_enable(isp_handle));
+    auto ispConfig = Isp::getDefaultConfig(800, 800);
+    Isp isp(ispConfig);
+
     ESP_ERROR_CHECK(esp_cam_ctlr_start(csi_handler));
     ESP_ERROR_CHECK(esp_cam_ctlr_receive(csi_handler, &trans, ESP_CAM_CTLR_MAX_DELAY));
 

@@ -1,5 +1,6 @@
 set (srcs 
     "main.cpp"
+    "app/bmp.cpp"
 )
 
 idf_component_register(
@@ -7,6 +8,7 @@ idf_component_register(
         ${srcs}
     INCLUDE_DIRS 
         "."
+        "./app"
     REQUIRES 
         esp_cam_sensor
         esp_sccb_intf

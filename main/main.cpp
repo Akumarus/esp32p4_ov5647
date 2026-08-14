@@ -20,6 +20,9 @@
 #include "driver/sdmmc_host.h"
 #include "sd_pwr_ctrl_by_on_chip_ldo.h"
 #include "esp_vfs_fat.h"
+#include "esp_cache.h"
+
+#include "bmp.hpp"
 
 static QueueHandle_t s_frame_evt_queue;
 
@@ -185,6 +188,23 @@ extern "C" void app_main(void)
     ESP_ERROR_CHECK(esp_vfs_fat_sdmmc_mount("/sdcard", &host, &slot_config, &mount_cfg, &card));
     ESP_LOGI("Main", "SD-карта смонтирована");
     
+    while (counter == 0) {
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+
+    esp_cache_msync(frame_data, frame_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
+    uint32_t bmpSize = Bmp::encodedSize(800, 800);
+    uint8_t *bmpData = (uint8_t *)heap_caps_aligned_alloc(8, bmpSize, MALLOC_CAP_SPIRAM);
+    Bmp::save(bmpData, bmpSize, (uint16_t *)frame_data, 800, 800);
+    FILE *f = fopen("/sdcard/frame.bmp", "wb");
+    if (f != NULL) {
+        fwrite(bmpData, 1, bmpSize, f);
+        fclose(f);
+        ESP_LOGI("Main", "BMP сохранен");
+    } else {
+        ESP_LOGE("Main", "Ошибка открытия файла");
+    }
+
     while (true)
     {
         ESP_LOGI("Main", "frame count = %lu", counter);

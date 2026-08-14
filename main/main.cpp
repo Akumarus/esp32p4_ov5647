@@ -17,6 +17,10 @@
 #include "esp_cam_ctlr_types.h"
 #include "esp_cam_ctlr_csi.h"
 
+#include "driver/sdmmc_host.h"
+#include "sd_pwr_ctrl_by_on_chip_ldo.h"
+#include "esp_vfs_fat.h"
+
 static QueueHandle_t s_frame_evt_queue;
 
 volatile uint32_t counter = 0;
@@ -151,6 +155,36 @@ extern "C" void app_main(void)
     ESP_ERROR_CHECK(esp_cam_ctlr_start(csi_handler));
     ESP_ERROR_CHECK(esp_cam_ctlr_receive(csi_handler, &trans, ESP_CAM_CTLR_MAX_DELAY));
 
+
+
+    sd_pwr_ctrl_handle_t pwr_ctrl_handle = NULL;
+    sd_pwr_ctrl_ldo_config_t ldo_config = {
+        .ldo_chan_id = 4,
+    };
+    ESP_ERROR_CHECK(sd_pwr_ctrl_new_on_chip_ldo(&ldo_config, &pwr_ctrl_handle));
+
+    esp_vfs_fat_sdmmc_mount_config_t mount_cfg = {};
+    mount_cfg.format_if_mount_failed = false;
+    mount_cfg.max_files = 5;
+    mount_cfg.allocation_unit_size = 16 * 1024;
+
+    sdmmc_card_t *card;
+    sdmmc_host_t host = SDMMC_HOST_DEFAULT();
+    host.pwr_ctrl_handle = pwr_ctrl_handle;
+
+    sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
+    slot_config.width = 4;
+    slot_config.d0 = GPIO_NUM_39;
+    slot_config.d1 = GPIO_NUM_40;
+    slot_config.d2 = GPIO_NUM_41;
+    slot_config.d3 = GPIO_NUM_42;
+    slot_config.clk = GPIO_NUM_43;
+    slot_config.cmd = GPIO_NUM_44;
+    slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
+
+    ESP_ERROR_CHECK(esp_vfs_fat_sdmmc_mount("/sdcard", &host, &slot_config, &mount_cfg, &card));
+    ESP_LOGI("Main", "SD-карта смонтирована");
+    
     while (true)
     {
         ESP_LOGI("Main", "frame count = %lu", counter);

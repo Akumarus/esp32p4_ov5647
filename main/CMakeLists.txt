@@ -12,5 +12,8 @@ idf_component_register(
         esp_sccb_intf
         driver
         esp_driver_cam
+        sdmmc
+        fatfs
+        vfs
 )
 

@@ -2,6 +2,7 @@ set (srcs
     "main.cpp"
     "app/bmp.cpp"
     "app/isp.cpp"
+    "app/csi.cpp"
     "app/camera.cpp"
 )
 

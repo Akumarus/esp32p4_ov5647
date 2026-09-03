@@ -3,7 +3,7 @@ set (srcs
     "app/bmp.cpp"
     "app/isp.cpp"
     "app/csi.cpp"
-    "app/camera.cpp"
+    "app/sensor.cpp"
 )
 
 idf_component_register(

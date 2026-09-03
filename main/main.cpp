@@ -4,8 +4,8 @@
 #include "freertos/task.h"
 
 #include "driver/i2c_master.h" 
-#include "esp_sccb_intf.h" 
-#include "esp_sccb_i2c.h"
+// #include "esp_sccb_intf.h" 
+// #include "esp_sccb_i2c.h"
 
 #include "esp_cam_sensor.h"
 #include "esp_cam_sensor_types.h"
@@ -18,7 +18,7 @@
 #include "esp_vfs_fat.h"
 #include "esp_cache.h"
 
-#include "camera.hpp"
+#include "sensor.hpp"
 #include "bmp.hpp"
 #include "isp.hpp"
 #include "csi.hpp"
@@ -43,51 +43,10 @@ extern "C" void app_main(void)
     bus_cfg.flags.enable_internal_pullup = true;
     ESP_ERROR_CHECK(i2c_new_master_bus(&bus_cfg, &bus_handle));
     
-    esp_sccb_io_handle_t sccb_handle;
-    sccb_i2c_config_t sccb_cfg = {};
-    sccb_cfg.dev_addr_length = I2C_ADDR_BIT_LEN_7;
-    sccb_cfg.device_address = 0x36;
-    sccb_cfg.scl_speed_hz = 100000;
-    ESP_ERROR_CHECK(sccb_new_i2c_io(bus_handle, &sccb_cfg, &sccb_handle));
-
-    esp_cam_sensor_config_t sensor_cfg = {};
-    sensor_cfg.sccb_handle = sccb_handle;
-    sensor_cfg.reset_pin = GPIO_NUM_NC;
-    sensor_cfg.pwdn_pin = GPIO_NUM_NC;
-    sensor_cfg.xclk_pin = GPIO_NUM_NC;
-    sensor_cfg.xclk_freq_hz = 24000000;
-    sensor_cfg.sensor_port = ESP_CAM_SENSOR_MIPI_CSI;
-
-    esp_cam_sensor_device_t *dev = ov5647_detect(&sensor_cfg);
-    if (dev == NULL) {
-        ESP_LOGI("Main", "OV5647 не обнаружен");
-        return;
-    }
-    ESP_LOGI("Main", "OV5647 обнаружен, name=%s", dev->name);
-
-    
-    esp_cam_sensor_format_array_t formats = {};
-    ESP_ERROR_CHECK(dev->ops->query_support_formats(dev, &formats));
-
-    const esp_cam_sensor_format_t *chosen = nullptr;
-    for (int i = 0; i < formats.count; i++) {
-        const auto &f = formats.format_array[i];
-        ESP_LOGI("Main", "format[%d]: %s %lu x %lu", i, f.name, (uint32_t)f.width, (uint32_t)f.height);
-        if (f.width == 800 && f.height == 800 && f.format == ESP_CAM_SENSOR_PIXFORMAT_RAW8) {
-            chosen = &f;
-            break;
-        }
-    }
-    if (!chosen) { ESP_LOGE("Main", "нет подходящего формата"); return; }
-
-    esp_cam_sensor_format_t format;
-    ESP_ERROR_CHECK(dev->ops->set_format(dev, chosen));
-    ESP_ERROR_CHECK(dev->ops->get_format(dev, &format));
-
-    int enable = 1;
-    dev->ops->priv_ioctl(dev, ESP_CAM_SENSOR_IOC_S_STREAM, &enable);
-
-
+    /* Sensor initialization */
+    Sensor ov5647(bus_handle);
+    ov5647.setFormat(800, 800);
+    ov5647.enable();
     /* ISP initialization */
     auto ispConfig = Isp::getDefaultConfig(800, 800);
     Isp isp(ispConfig);

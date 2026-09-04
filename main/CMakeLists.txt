@@ -4,6 +4,7 @@ set (srcs
     "app/isp.cpp"
     "app/csi.cpp"
     "app/ldo.cpp"
+    "app/i2c.cpp"
     "app/sensor.cpp"
 )
 

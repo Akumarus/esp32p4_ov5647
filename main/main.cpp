@@ -23,6 +23,7 @@
 #include "isp.hpp"
 #include "csi.hpp"
 #include "ldo.hpp"
+#include "i2c.hpp"
 
 extern "C" void app_main(void)
 {
@@ -31,19 +32,10 @@ extern "C" void app_main(void)
     /* Ldo initialization */
     Ldo csiLdo(3, 2500);
     Ldo sdLdo(4);
-
-    i2c_master_bus_handle_t bus_handle;
-    i2c_master_bus_config_t bus_cfg = {};
-    bus_cfg.i2c_port = I2C_NUM_0;
-    bus_cfg.sda_io_num = GPIO_NUM_7;
-    bus_cfg.scl_io_num = GPIO_NUM_8;
-    bus_cfg.clk_source = I2C_CLK_SRC_DEFAULT;
-    bus_cfg.glitch_ignore_cnt = 7;
-    bus_cfg.flags.enable_internal_pullup = true;
-    ESP_ERROR_CHECK(i2c_new_master_bus(&bus_cfg, &bus_handle));
-    
+    /* I2c initialization */
+    I2c i2c;
     /* Sensor initialization */
-    Sensor ov5647(bus_handle);
+    Sensor ov5647(i2c.getHandle());
     ov5647.setFormat(800, 800);
     ov5647.enable();
     /* ISP initialization */

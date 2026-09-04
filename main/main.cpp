@@ -5,6 +5,7 @@
 #include "esp_cache.h"
 #include "ethernet.hpp"
 #include "sensor.hpp"
+#include "jpeg.hpp"
 #include "bmp.hpp"
 #include "isp.hpp"
 #include "csi.hpp"
@@ -31,6 +32,7 @@ extern "C" void app_main(void)
     csi.receive(ESP_CAM_CTLR_MAX_DELAY);
     /* Vfs initialization */
     Vfs vfs;
+    Jpeg jpeg(800, 800);
     /* Ethenet initialization */
     // Ethernet ethernet;
 
@@ -40,12 +42,16 @@ extern "C" void app_main(void)
 
     ESP_LOGI("Main", "get frame");
     esp_cache_msync(csi.trans.buffer, csi.trans.buflen, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
-    uint32_t bmpSize = Bmp::encodedSize(800, 800);
-    uint8_t *bmpData = (uint8_t *)heap_caps_aligned_alloc(8, bmpSize, MALLOC_CAP_SPIRAM);
-    Bmp::save(bmpData, bmpSize, (uint16_t *)csi.trans.buffer, 800, 800);
+    // uint32_t bmpSize = Bmp::encodedSize(800, 800);
+    // uint8_t *bmpData = (uint8_t *)heap_caps_aligned_alloc(8, bmpSize, MALLOC_CAP_SPIRAM);
+    // Bmp::save(bmpData, bmpSize, (uint16_t *)csi.trans.buffer, 800, 800);
+    uint8_t *jpegData = nullptr;
+    uint32_t jpegSize = 0;
+    jpeg.encode((uint8_t*)csi.trans.buffer, &jpegData, &jpegSize);
+    ESP_LOGI("Main", "Jpeg size = %lu", jpegSize);
     ESP_LOGI("Main", "frame converted to bmp");
     
-    vfs.writeFile("/sdcard/frame.bmp", bmpData, bmpSize);
+    vfs.writeFile("/sdcard/i.jpg", jpegData, jpegSize);
 
     while (true)
     {

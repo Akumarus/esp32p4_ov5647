@@ -6,6 +6,7 @@ set (srcs
     "app/ldo.cpp"
     "app/i2c.cpp"
     "app/vfs.cpp"
+    "app/jpeg.cpp"
     "app/sensor.cpp"
     "app/ethernet.cpp"
 )
@@ -17,6 +18,7 @@ idf_component_register(
         "."
         "./app"
     REQUIRES
+        esp_driver_jpeg
         esp_driver_cam
         esp_cam_sensor
         esp_sccb_intf

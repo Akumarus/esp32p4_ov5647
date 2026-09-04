@@ -2,22 +2,8 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-
-#include "driver/i2c_master.h" 
-// #include "esp_sccb_intf.h" 
-// #include "esp_sccb_i2c.h"
-
-#include "esp_cam_sensor.h"
-#include "esp_cam_sensor_types.h"
-#include "ov5647.h" 
-
-#include "esp_ldo_regulator.h"
-
-#include "driver/sdmmc_host.h"
-#include "sd_pwr_ctrl_by_on_chip_ldo.h"
-#include "esp_vfs_fat.h"
 #include "esp_cache.h"
-
+#include "ethernet.hpp"
 #include "sensor.hpp"
 #include "bmp.hpp"
 #include "isp.hpp"
@@ -45,6 +31,8 @@ extern "C" void app_main(void)
     csi.receive(ESP_CAM_CTLR_MAX_DELAY);
     /* Vfs initialization */
     Vfs vfs;
+    /* Ethenet initialization */
+    // Ethernet ethernet;
 
     while (csi.counter == 0) {
         vTaskDelay(pdMS_TO_TICKS(10));

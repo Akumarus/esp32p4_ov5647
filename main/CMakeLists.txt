@@ -7,6 +7,7 @@ set (srcs
     "app/i2c.cpp"
     "app/vfs.cpp"
     "app/sensor.cpp"
+    "app/ethernet.cpp"
 )
 
 idf_component_register(
@@ -19,6 +20,8 @@ idf_component_register(
         esp_driver_cam
         esp_cam_sensor
         esp_sccb_intf
+        esp_eth
+        esp_netif
         driver
         sdmmc
         fatfs

@@ -5,6 +5,7 @@ set (srcs
     "app/csi.cpp"
     "app/ldo.cpp"
     "app/i2c.cpp"
+    "app/vfs.cpp"
     "app/sensor.cpp"
 )
 
@@ -14,11 +15,11 @@ idf_component_register(
     INCLUDE_DIRS 
         "."
         "./app"
-    REQUIRES 
+    REQUIRES
+        esp_driver_cam
         esp_cam_sensor
         esp_sccb_intf
         driver
-        esp_driver_cam
         sdmmc
         fatfs
         vfs

@@ -24,18 +24,14 @@
 #include "csi.hpp"
 #include "ldo.hpp"
 #include "i2c.hpp"
+#include "vfs.hpp"
 
 extern "C" void app_main(void)
 {
     vTaskDelay(pdMS_TO_TICKS(1000));
 
-    /* Ldo initialization */
-    Ldo csiLdo(3, 2500);
-    Ldo sdLdo(4);
-    /* I2c initialization */
-    I2c i2c;
     /* Sensor initialization */
-    Sensor ov5647(i2c.getHandle());
+    Sensor ov5647;
     ov5647.setFormat(800, 800);
     ov5647.enable();
     /* ISP initialization */
@@ -47,45 +43,21 @@ extern "C" void app_main(void)
     csi.enable();
     csi.start();
     csi.receive(ESP_CAM_CTLR_MAX_DELAY);
+    /* Vfs initialization */
+    Vfs vfs;
 
-    esp_vfs_fat_sdmmc_mount_config_t mount_cfg = {};
-    mount_cfg.format_if_mount_failed = false;
-    mount_cfg.max_files = 5;
-    mount_cfg.allocation_unit_size = 16 * 1024;
-
-    sdmmc_card_t *card;
-    sdmmc_host_t host = SDMMC_HOST_DEFAULT();
-    host.pwr_ctrl_handle = sdLdo.as<sd_pwr_ctrl_handle_t>();
-
-    sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
-    slot_config.width = 4;
-    slot_config.d0 = GPIO_NUM_39;
-    slot_config.d1 = GPIO_NUM_40;
-    slot_config.d2 = GPIO_NUM_41;
-    slot_config.d3 = GPIO_NUM_42;
-    slot_config.clk = GPIO_NUM_43;
-    slot_config.cmd = GPIO_NUM_44;
-    slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
-
-    ESP_ERROR_CHECK(esp_vfs_fat_sdmmc_mount("/sdcard", &host, &slot_config, &mount_cfg, &card));
-    ESP_LOGI("Main", "SD-карта смонтирована");
-    
     while (csi.counter == 0) {
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 
+    ESP_LOGI("Main", "get frame");
     esp_cache_msync(csi.trans.buffer, csi.trans.buflen, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
     uint32_t bmpSize = Bmp::encodedSize(800, 800);
     uint8_t *bmpData = (uint8_t *)heap_caps_aligned_alloc(8, bmpSize, MALLOC_CAP_SPIRAM);
     Bmp::save(bmpData, bmpSize, (uint16_t *)csi.trans.buffer, 800, 800);
-    FILE *f = fopen("/sdcard/frame.bmp", "wb");
-    if (f != NULL) {
-        fwrite(bmpData, 1, bmpSize, f);
-        fclose(f);
-        ESP_LOGI("Main", "BMP сохранен");
-    } else {
-        ESP_LOGE("Main", "Ошибка открытия файла");
-    }
+    ESP_LOGI("Main", "frame converted to bmp");
+    
+    vfs.writeFile("/sdcard/frame.bmp", bmpData, bmpSize);
 
     while (true)
     {

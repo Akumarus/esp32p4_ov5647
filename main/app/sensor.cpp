@@ -2,13 +2,13 @@
 #include "ov5647.h"
 #include "esp_log.h"
 
-Sensor::Sensor(i2c_master_bus_handle_t busHandle)
+Sensor::Sensor() : ldo(3, 2500), i2c{}
 {
     sccb_i2c_config_t sccbConfig = {};
     sccbConfig.dev_addr_length = I2C_ADDR_BIT_LEN_7;
     sccbConfig.device_address = OV5647_ADDR;
     sccbConfig.scl_speed_hz = SENSOR_SCCB_SPEED;
-    ESP_ERROR_CHECK(sccb_new_i2c_io(busHandle, &sccbConfig, &sccbHandle));
+    ESP_ERROR_CHECK(sccb_new_i2c_io(i2c.getHandle(), &sccbConfig, &sccbHandle));
 
     esp_cam_sensor_config_t sensorConfig = {};
     sensorConfig.sccb_handle = sccbHandle;

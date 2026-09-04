@@ -22,16 +22,15 @@
 #include "bmp.hpp"
 #include "isp.hpp"
 #include "csi.hpp"
+#include "ldo.hpp"
 
 extern "C" void app_main(void)
 {
     vTaskDelay(pdMS_TO_TICKS(1000));
 
-    esp_ldo_channel_handle_t ldo_handler;
-    esp_ldo_channel_config_t ldo_cfg = {};
-    ldo_cfg.chan_id = 3;
-    ldo_cfg.voltage_mv = 2500;
-    ESP_ERROR_CHECK(esp_ldo_acquire_channel(&ldo_cfg, &ldo_handler));
+    /* Ldo initialization */
+    Ldo csiLdo(3, 2500);
+    Ldo sdLdo(4);
 
     i2c_master_bus_handle_t bus_handle;
     i2c_master_bus_config_t bus_cfg = {};
@@ -57,12 +56,6 @@ extern "C" void app_main(void)
     csi.start();
     csi.receive(ESP_CAM_CTLR_MAX_DELAY);
 
-    sd_pwr_ctrl_handle_t pwr_ctrl_handle = NULL;
-    sd_pwr_ctrl_ldo_config_t ldo_config = {
-        .ldo_chan_id = 4,
-    };
-    ESP_ERROR_CHECK(sd_pwr_ctrl_new_on_chip_ldo(&ldo_config, &pwr_ctrl_handle));
-
     esp_vfs_fat_sdmmc_mount_config_t mount_cfg = {};
     mount_cfg.format_if_mount_failed = false;
     mount_cfg.max_files = 5;
@@ -70,7 +63,7 @@ extern "C" void app_main(void)
 
     sdmmc_card_t *card;
     sdmmc_host_t host = SDMMC_HOST_DEFAULT();
-    host.pwr_ctrl_handle = pwr_ctrl_handle;
+    host.pwr_ctrl_handle = sdLdo.as<sd_pwr_ctrl_handle_t>();
 
     sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
     slot_config.width = 4;

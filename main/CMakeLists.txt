@@ -3,6 +3,7 @@ set (srcs
     "app/bmp.cpp"
     "app/isp.cpp"
     "app/csi.cpp"
+    "app/ldo.cpp"
     "app/sensor.cpp"
 )
 
